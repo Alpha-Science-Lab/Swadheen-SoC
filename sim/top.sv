@@ -4,8 +4,7 @@
  * ---------------------------------------------------------------------
  * File: top.sv
  *
- * Modified (add scratchpad register)
- * by Md. Jannatul Nayem
+ * Modified by Md. Jannatul Nayem
  * Org: Alpha Science Lab, April '26
  */
 
@@ -18,37 +17,20 @@ module top;
 
     /* verilator lint_off unusedsignal */
     logic        clk;
-    logic        clk_vga;
-    logic [15:0] switches_async = 0;
     logic [15:0] leds;
-    logic  [7:0] segments;
-    logic  [3:0] segments_select;
     logic  [4:0] buttons_async = 0;
-    logic  [3:0] vga_red;
-    logic  [3:0] vga_blue;
-    logic  [3:0] vga_green;
-    logic        vga_hsync;
-    logic        vga_vsync;
     logic        uart_rx_async = 1;
     logic        uart_tx;
     /* verilator lint_on unusedsignal */
-    mcu #(
+
+    Swadheen_SoC #(
         .CLK_FREQUENCY_MHZ(SYS_CLK_FREQUENCY_MHZ),
         .UART_BAUD_RATE( int'((SYS_CLK_FREQUENCY_MHZ*1_000_000) / 15) )
-    ) mcu (
+    ) SoC (
         .clk(clk),
         .clk_mem(~clk),
-        .clk_vga(clk_vga),
-        .switches_async(switches_async),
         .leds(leds),
-        .segments(segments),
-        .segments_select(segments_select),
         .buttons_async(buttons_async),
-        .vga_red(vga_red),
-        .vga_blue(vga_blue),
-        .vga_green(vga_green),
-        .vga_hsync(vga_hsync),
-        .vga_vsync(vga_vsync),
         .uart_rx_async(uart_rx_async),
         .uart_tx(uart_tx)
     );
@@ -62,14 +44,6 @@ module top;
         end
     end
 
-    // VGA pixel clock
-    initial begin
-        clk_vga = 1;
-        forever begin
-            #(int'(SIM_CYCLES_PER_VGA_CLK / 2));
-            clk_vga = ~clk_vga;
-        end
-    end
 
     initial begin
         buttons_async = 5'b00001; // assert reset
@@ -96,8 +70,8 @@ module top;
 
     // Respond to test interface
     always @(posedge clk) begin
-        if (mcu.wb_test.test_stb) begin
-            case (mcu.wb_test.test_reg)
+        if (SoC.wb_test.test_stb) begin
+            case (SoC.wb_test.test_reg)
                 0: $display("(%6d ps) Test pass!", $time());
                 1: begin
                     $display("(%6d ps) Test fail!", $time());
@@ -111,10 +85,10 @@ module top;
             endcase
         end
 
-        if (mcu.wb_test.scratchpad_stb) begin
+        if (SoC.wb_test.scratchpad_stb) begin
             $display("\033[0;33m"); // color_orange
             $display("(%6d ps) Scratchpad: 0x%08h", 
-                $time(), mcu.wb_test.scratchpad_reg);
+                $time(), SoC.wb_test.scratchpad_reg);
             $display("\033[0m"); // color off
 
         end

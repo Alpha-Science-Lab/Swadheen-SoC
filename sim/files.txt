@@ -13,6 +13,4 @@ defines/clk_params.sv
 -y lib/peripherals
 -y lib/wishbone
 
--y ref
-
 -y rtl

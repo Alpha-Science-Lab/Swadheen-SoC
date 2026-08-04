@@ -40,10 +40,10 @@ module tang9k_top(
     // |                                    MCU Instantiation                                     |
     // --------------------------------------------------------------------------------------------
 
-    tang9k_mcu #(
+    tang9k_SoC #(
         .CLK_FREQUENCY_MHZ(9.0), /* Conform to /synth/gowin_rpll.v*/
         .UART_BAUD_RATE(115200)
-    ) mcu (
+    ) SoC (
         .clk(pll_clk_o),
         .clk_mem(~pll_clk_o),
         .leds(mcu_leds),

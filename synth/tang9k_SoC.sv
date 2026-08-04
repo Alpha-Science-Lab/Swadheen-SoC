@@ -7,7 +7,7 @@
 */
 
 
-module tang9k_mcu #(
+module tang9k_SoC #(
     parameter real CLK_FREQUENCY_MHZ,
     parameter int  UART_BAUD_RATE
 ) (

@@ -7,7 +7,7 @@
 
 
 
-module mcu #(
+module Swadheen_SoC #(
     parameter real CLK_FREQUENCY_MHZ,
     parameter int  UART_BAUD_RATE
 ) (
@@ -15,28 +15,12 @@ module mcu #(
     input logic clk,
     // Memory clock
     input logic clk_mem,
-    // VGA pixel clock
-    input logic clk_vga,
-
-    // Switches
-    input  logic [15:0] switches_async,
 
     // LEDs
     output logic [15:0] leds,
 
-    // 7 Segment Display
-    output logic [7:0] segments,
-    output logic [3:0] segments_select,
-
     // Buttons (order: 4 - drluc- 0)
     input  logic [4:0] buttons_async,
-
-    // VGA output
-    output logic [3:0] vga_red,
-    output logic [3:0] vga_blue,
-    output logic [3:0] vga_green,
-    output logic       vga_hsync,
-    output logic       vga_vsync,
 
     // UART
     input  logic uart_rx_async,
@@ -57,15 +41,6 @@ module mcu #(
         );
     end
 
-    logic [15:0] switches;
-    for (genvar i = 0; i < 16; i++) begin: switch_conditioning
-        synchronizer switch_sync(
-            .clk(clk),
-            .async_in(switches_async[i]),
-            .sync_out(switches[i])
-        );
-    end
-
     logic uart_rx;
     synchronizer uart_rx_sync(
         .clk(clk),
@@ -77,7 +52,6 @@ module mcu #(
     // |                                           rst                                            |
     // --------------------------------------------------------------------------------------------
 
-    // Use initial assignment to ensure initial reset after loading the configuration (FPGA only)
     logic rst = 1;
 
     // Use center button as reset
@@ -181,26 +155,6 @@ module mcu #(
         .wishbone(mem_bus_slaves[2])
     );
 
-    wishbone_switches #(
-        .ADDRESS(SWITCHES_START),
-        .SIZE(SWITCHES_SIZE)
-    ) wb_switches (
-        .clk(clk),
-        .rst(rst),
-        .switches(switches),
-        .wishbone(mem_bus_slaves[3])
-    );
-
-    wishbone_segments #(
-        .ADDRESS(SEGMENTS_START),
-        .SIZE(SEGMENTS_SIZE)
-    ) wb_segments (
-        .clk(clk),
-        .rst(rst),
-        .segments(segments),
-        .segments_select(segments_select),
-        .wishbone(mem_bus_slaves[4])
-    );
 
     wishbone_uart #(
         .ADDRESS(UART_START),
@@ -227,24 +181,6 @@ module mcu #(
         .interrupt(timer_interrupt),
 
         .wishbone(mem_bus_slaves[6])
-    );
-
-    wishbone_vga #(
-        .ADDRESS(VGA_START),
-        .SIZE(VGA_SIZE)
-    ) wb_vga (
-        .clk(clk),
-        .rst(rst),
-
-        .clk_vga(clk_vga),
-
-        .vga_vsync(vga_vsync),
-        .vga_hsync(vga_hsync),
-        .vga_r(vga_red),
-        .vga_g(vga_green),
-        .vga_b(vga_blue),
-
-        .wishbone(mem_bus_slaves[7])
     );
 
     wishbone_test #(

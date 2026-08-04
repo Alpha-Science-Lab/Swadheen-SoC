@@ -41,7 +41,7 @@ set SOURCES {
     synth/tang9k_bram8_tdp.v
     synth/tang9k_ram_32kib.sv
     synth/tang9k_ram.sv
-    synth/tang9k_mcu.sv
+    synth/tang9k_SoC.sv
 
     synth/tang9k_top.sv
 }
@@ -63,7 +63,7 @@ add_file $ROOT/synth/tang9k.sdc
 # Project Options
 #---------------------------------------------------------
 set_option -top_module tang9k_top
-set_option -output_base_name hadi_v
+set_option -output_base_name SoC_tang9k
 
 #---------------------------------------------------------
 # Synthesize, Place & Route, Generate Bitstream

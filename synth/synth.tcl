@@ -53,7 +53,6 @@ set SOURCES {
     lib/peripherals/*.sv
     lib/wishbone/*.sv
 
-    ref/*.sv
     rtl/*.sv
 
     synth/top.sv
@@ -80,9 +79,11 @@ opt_design
 
 # Synthesis reports
 file mkdir reports
-report_timing_summary -file reports/timing_syn.rpt
-report_power -file reports/power_syn.rpt
-report_design_analysis -file reports/design_analysis.rpt
+
+report_timing_summary -file reports/timing_soc_syn.rpt
+report_utilization -file reports/utilization_soc_syn.rpt
+report_utilization -hierarchical -file reports/utilization_soc_hier_syn.rpt
+report_power -file reports/power_soc_syn.rpt
 
 # Place and Route
 place_design
@@ -91,9 +92,10 @@ route_design
 phys_opt_design
 
 # PnR Reports
-report_timing_summary -file reports/timing_pnr.rpt
-report_utilization -file reports/utilization_pnr.rpt
-report_power -file reports/power_pnr.rpt
+report_timing_summary -file reports/timing_soc_pnr.rpt
+report_utilization -file reports/utilization_soc_pnr.rpt
+report_utilization -hierarchical -file reports/utilization_soc_hier_pnr.rpt
+report_power -file reports/power_soc_pnr.rpt
 
 # Generate bitstream
-write_bitstream -force -bin hadi_v.bit
+write_bitstream -force -bin SoC_basys3.bit

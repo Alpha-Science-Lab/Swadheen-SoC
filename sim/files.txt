@@ -13,4 +13,15 @@ defines/clk_params.sv
 -y lib/peripherals
 -y lib/wishbone
 
+-y external/periph-wb/spondon/design
+-y external/periph-wb/dotara/design
+
+external/periph-wb/bashi/design/bashi_pkg.sv
+external/periph-wb/bashi/design/bashi_regs.sv
+external/periph-wb/bashi/design/bashi_i2s_tx.sv
+external/periph-wb/bashi/design/bashi_wb_i2s.sv
+
+-y external/periph-wb/karnaphuli/design
+-y external/periph-wb/brahmaputra/design
+
 -y rtl

@@ -4,3 +4,6 @@
 
 # memory images
 /synth/tang9k_mem_inits/
+
+# submodules
+/external/

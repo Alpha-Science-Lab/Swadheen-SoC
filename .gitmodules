@@ -1,0 +1,3 @@
+[submodule "external/periph-wb"]
+	path = external/periph-wb
+	url = https://github.com/Alpha-Science-Lab/periph-wb.git

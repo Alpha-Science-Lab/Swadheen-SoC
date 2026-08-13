@@ -34,8 +34,23 @@ package constants;
     localparam bit [31:0] TIMER_START = 32'h0008_5000;
     localparam bit [31:0] TIMER_SIZE  = 32'h0000_0005;
 
+    localparam bit [31:0] PWM_START = 32'h0008_5100;
+    localparam bit [31:0] PWM_SIZE  = 32'h0000_0015;
+
+    localparam bit [31:0] I2C_START = 32'h0008_5200;
+    localparam bit [31:0] I2C_SIZE  = 32'h0000_0006;
+
+    localparam bit [31:0] I2S_START = 32'h0008_5300;
+    localparam bit [31:0] I2S_SIZE  = 32'h0000_0004;
+
+    localparam bit [31:0] SPI_START = 32'h0008_5400;
+    localparam bit [31:0] SPI_SIZE  = 32'h0000_0006;
+
+    localparam bit [31:0] GPIO_START = 32'h0008_5600;
+    localparam bit [31:0] GPIO_SIZE  = 32'h0000_0017;
+
     localparam bit [31:0] VGA_START = 32'h0009_0000;
-    localparam bit [31:0] VGA_SIZE  = 32'h0000_9600; // 640 * 480 pixel with 4 bit color depth
+    localparam bit [31:0] VGA_SIZE  = 32'h0000_9600; /* 640 * 480 pixel with 4 bit color depth*/
 
     localparam bit [31:0] TEST_START = 32'h0012_0000;
     localparam bit [31:0] TEST_SIZE  = 32'h0000_0006;

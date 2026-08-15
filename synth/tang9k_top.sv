@@ -19,7 +19,12 @@ module tang9k_top(
 
     // UART
     input  logic uart_rx_async,
-    output logic uart_tx
+    output logic uart_tx,
+
+    // GPIOs
+    inout  logic [7:0] gpioa,
+    inout  logic [7:0] gpiob,
+    inout  logic [7:0] gpioc
 );
 
     logic pll_clk_o, pll_locked;
@@ -49,7 +54,10 @@ module tang9k_top(
         .leds(mcu_leds),
         .buttons_async(mcu_buttons),
         .uart_rx_async(uart_rx_async),
-        .uart_tx(uart_tx)
+        .uart_tx(uart_tx),
+        .gpioa(gpioa),
+        .gpiob(gpiob),
+        .gpioc(gpioc)
     );
 
 

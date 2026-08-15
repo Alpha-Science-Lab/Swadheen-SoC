@@ -21,10 +21,10 @@ module tang9k_top(
     input  logic uart_rx_async,
     output logic uart_tx,
 
-    // GPIOs
-    inout  logic [7:0] gpioa,
-    inout  logic [7:0] gpiob,
-    inout  logic [7:0] gpioc
+    // GPIOs                  /* GPIO alternate functions mapping */   
+    inout  logic [7:0] gpioa, /* TX | RX | SDA | SCL | PWM | PWM | PWM | PWM */
+    inout  logic [7:0] gpiob, /* MOSI | SCK | CS | MISO | PWM | PWM | PWM | PWM */
+    inout  logic [7:0] gpioc  /* NONE | NONE | NONE | NONE | PWM | PWM | PWM | PWM */
 );
 
     logic pll_clk_o, pll_locked;

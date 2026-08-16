@@ -29,6 +29,7 @@ VIVADO 			  ?= $(XILINX_VIVADO)/bin/vivado
 GOWIN_SH    	  ?= LD_LIBRARY_PATH=/tools/gowin_eda/IDE/lib QT_QPA_PLATFORM=offscreen DISPLAY= gw_sh
 GOWIN_PLL   	  = gowin_pll
 
+BOOTLOADER        ?= bootloader
 M_EXT             ?= 0
 
 # ISA configuration
@@ -63,11 +64,15 @@ ASM_DIR           = $(TEST_DIR)/asm
 C_DIR             = $(TEST_DIR)/c
 SV_DIR            = $(TEST_DIR)/sv
 
-TANG9K_BITSTREAM  = $(BUILD_DIR)/$(SYNTH_DIR)/tang9k/impl/pnr/hadi_v.fs
-GOWIN_PLL_WRAPPER = $(SYNTH_DIR)/gowin_rpll.v
+TTYPORT           ?= /dev/ttyUSB1
+BAUD              ?= 115200
+FIRMWARE          ?= running_led
+
+TANG9K_BITSTREAM  = $(BUILD_DIR)/$(SYNTH_DIR)/tang9k/impl/pnr/SoC_tang9k.fs
 SYS_CLK_FREQ      ?= 9
+GOWIN_PLL_WRAPPER = $(SYNTH_DIR)/gowin_rpll.v
 GOWIN_TCL_SCRIPT  = $(SYNTH_DIR)/tang9k_synth.tcl
-BOOTLOADER        ?= bootloader
+
 
 ################################################################################
 #                                  Print Help                                  #
@@ -110,9 +115,8 @@ synthesis: $(BUILD_DIR)/$(C_DIR)/bootloader/init.mem
 ################################################################################
 
 .PHONY: synthesis_gw
-synthesis_gw:$(TANG9K_BITSTREAM)
+synthesis_gw: $(TANG9K_BITSTREAM)
 
-# .PHONY: flash_tang9k
 flash_tang9k: $(TANG9K_BITSTREAM)
 	openFPGALoader -b tangnano9k -f $(TANG9K_BITSTREAM)
 
@@ -220,6 +224,14 @@ $(BUILD_DIR)/$(C_DIR)/%/out.dis: $(BUILD_DIR)/$(C_DIR)/%/out.elf
 $(C_TEST_NAMES): $(C_DIR)/%: $(BUILD_DIR)/$(C_DIR)/%/init.mem $(BUILD_DIR)/$(C_DIR)/%/out.hex $(BUILD_DIR)/$(C_DIR)/%/out.elf $(BUILD_DIR)/$(C_DIR)/%/out.dis $(BUILD_DIR)/$(SIM_DIR)/top
 	cd $(BUILD_DIR)/$(C_DIR)/$* && $(CURDIR)/$(BUILD_DIR)/$(SIM_DIR)/top
 	@echo 'gtkwave $(BUILD_DIR)/$(C_DIR)/$*/sim.fst $(SAVES_DIR)/pipeline.gtkw' > $(BUILD_DIR)/show.sh
+
+################################################################################
+#                           Firmware Update via UART                           #
+################################################################################
+
+.PHONY: fw_upd
+fw_upd: $(BUILD_DIR)/$(C_DIR)/$(FIRMWARE)/out.hex
+	@ $(PYTHON) fw_upd.py $(TTYPORT) $(BAUD) $(BUILD_DIR)/$(C_DIR)/$(FIRMWARE)/out.hex
 
 ################################################################################
 #                             SystemVerilog Tests                              #

@@ -29,6 +29,7 @@ package constants;
     localparam bit [31:0] SEGMENTS_SIZE  = 32'h0000_0001;
 
     localparam bit [31:0] UART_START = 32'h0008_4000;
+    localparam bit [31:0] UART1_START = 32'h0008_4100;
     localparam bit [31:0] UART_SIZE  = 32'h0000_0001;
 
     localparam bit [31:0] TIMER_START = 32'h0008_5000;

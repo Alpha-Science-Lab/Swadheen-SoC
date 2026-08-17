@@ -76,15 +76,46 @@ module tang9k_SoC #(
     wishbone_interface fetch_bus();
     wishbone_interface mem_bus();
 
+    // peipheral wires
+    logic uart_rx_gpio, uart_tx_gpio;
+
+    logic [15:0] pwm_out;
+
+    logic i2c_intr;
+    logic i2c_sda_i;
+    logic i2c_sda_o;
+    logic i2c_sda_oe;
+    logic i2c_scl_i;
+    logic i2c_scl_o;
+    logic i2c_scl_oe;
+
+    logic spi_intr;
+    logic spi_clk;
+    logic spi_mosi;
+    logic [7:0] spi_miso;
+    logic spi_miso_mux_o;
+    logic [7:0] spi_cs;
+
+    assign spi_miso_mux_o = (spi_cs == 8'h7F) ? spi_miso[7] :
+                            (spi_cs == 8'hBF) ? spi_miso[6] :
+                            (spi_cs == 8'hDF) ? spi_miso[5] :
+                            (spi_cs == 8'hEF) ? spi_miso[4] :
+                            (spi_cs == 8'hF7) ? spi_miso[3] :
+                            (spi_cs == 8'hFB) ? spi_miso[2] :
+                            (spi_cs == 8'hFD) ? spi_miso[1] :
+                            (spi_cs == 8'hFE) ? spi_miso[0] :
+                            1'b0;
+
     // Interrupts    
-    logic test_interrupt;
-    logic uart_interrupt;
+    logic uart0_interrupt,uart1_interrupt;
     logic timer_interrupt;
 
     logic external_interrupt;
     assign external_interrupt = |{
-        uart_interrupt,
-        test_interrupt
+        uart0_interrupt,
+        uart1_interrupt,
+        i2c_intr,
+        spi_intr
     };
 
     // Instantiate CPU
@@ -102,9 +133,9 @@ module tang9k_SoC #(
     // --------------------------------------------------------------------------------------------
 
     // Memory bus interconnect
-    wishbone_interface mem_bus_slaves[14]();
+    wishbone_interface mem_bus_slaves[15]();
     wishbone_interconnect #(
-        .NUM_SLAVES(14),
+        .NUM_SLAVES(15),
         .SLAVE_ADDRESS({
             MEMORY_START,
             LEDS_START,
@@ -112,6 +143,7 @@ module tang9k_SoC #(
             SWITCHES_START,
             SEGMENTS_START,
             UART_START,
+            UART1_START,
             TIMER_START,
             PWM_START,
             I2C_START,
@@ -127,6 +159,7 @@ module tang9k_SoC #(
             BUTTONS_SIZE,
             SWITCHES_SIZE,
             SEGMENTS_SIZE,
+            UART_SIZE,
             UART_SIZE,
             TIMER_SIZE,
             PWM_SIZE,
@@ -174,20 +207,32 @@ module tang9k_SoC #(
         .wishbone(mem_bus_slaves[2])
     );
 
-    logic uart_rx_gpio;
-
     wishbone_uart #(
         .ADDRESS(UART_START),
         .SIZE(UART_SIZE),
         .BAUD_RATE(UART_BAUD_RATE),
         .CLK_FREQUENCY_MHZ(CLK_FREQUENCY_MHZ)
-    ) wb_uart (
+    ) wb_uart0 (
         .clk(clk),
         .rst(rst),
-        .rx_serial_in(uart_rx | uart_rx_gpio),
+        .rx_serial_in(uart_rx),
         .tx_serial_out(uart_tx),
-        .interrupt(uart_interrupt),
+        .interrupt(uart0_interrupt),
         .wishbone(mem_bus_slaves[5])
+    );
+
+    wishbone_uart #(
+        .ADDRESS(UART1_START),
+        .SIZE(UART_SIZE),
+        .BAUD_RATE(UART_BAUD_RATE),
+        .CLK_FREQUENCY_MHZ(CLK_FREQUENCY_MHZ)
+    ) wb_uart1 (
+        .clk(clk),
+        .rst(rst),
+        .rx_serial_in(uart_rx_gpio),
+        .tx_serial_out(uart_tx_gpio),
+        .interrupt(uart1_interrupt),
+        .wishbone(mem_bus_slaves[6])
     );
 
     wishbone_timer #(
@@ -198,10 +243,8 @@ module tang9k_SoC #(
         .clk(clk),
         .rst(rst),
         .interrupt(timer_interrupt),
-        .wishbone(mem_bus_slaves[6])
+        .wishbone(mem_bus_slaves[7])
     );
-
-    logic [15:0] pwm_out;
 
     spondon_wb_pwm #(
         .START_ADDRESS(PWM_START),
@@ -211,17 +254,9 @@ module tang9k_SoC #(
     ) wb_pwm (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[7]),
+        .wb(mem_bus_slaves[8]),
         .pwm_out(pwm_out)
     );
-
-    logic i2c_intr;
-    logic i2c_sda_i;
-    logic i2c_sda_o;
-    logic i2c_sda_oe;
-    logic i2c_scl_i;
-    logic i2c_scl_o;
-    logic i2c_scl_oe;
     
     dotara_wb_i2c #(
         .START_ADDRESS(I2C_START),
@@ -231,7 +266,7 @@ module tang9k_SoC #(
     ) wb_i2c (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[8]),
+        .wb(mem_bus_slaves[9]),
         .intr(i2c_intr),
         .scl_pad_i(i2c_scl_i),
         .scl_pad_o(i2c_scl_o),
@@ -240,24 +275,6 @@ module tang9k_SoC #(
         .sda_pad_o(i2c_sda_o),
         .sda_padoen_o(i2c_sda_oe)
     );
-
-
-    logic spi_intr;
-    logic spi_clk;
-    logic spi_mosi;
-    logic [7:0] spi_miso;
-    logic spi_miso_mux_o;
-    logic [7:0] spi_cs;
-
-    assign spi_miso_mux_o = (spi_cs == 8'h7F) ? spi_miso[7] :
-                            (spi_cs == 8'hBF) ? spi_miso[6] :
-                            (spi_cs == 8'hDF) ? spi_miso[5] :
-                            (spi_cs == 8'hEF) ? spi_miso[4] :
-                            (spi_cs == 8'hF7) ? spi_miso[3] :
-                            (spi_cs == 8'hFB) ? spi_miso[2] :
-                            (spi_cs == 8'hFD) ? spi_miso[1] :
-                            (spi_cs == 8'hFE) ? spi_miso[0] :
-                            1'b0;
     
     karnaphuli_wb_spi #(
         .START_ADDRESS(SPI_START),
@@ -269,7 +286,7 @@ module tang9k_SoC #(
     ) wb_spi (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[10]),
+        .wb(mem_bus_slaves[11]),
         .intr(spi_intr),
         .spi_sclk(spi_clk),
         .spi_mosi(spi_mosi),
@@ -283,11 +300,11 @@ module tang9k_SoC #(
     ) wb_gpio (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[11]),
+        .wb(mem_bus_slaves[12]),
         .gpioa(gpioa),
         .gpiob(gpiob),
         .gpioc(gpioc),
-        .uart_tx(uart_tx),
+        .uart_tx(uart_tx_gpio),
         .uart_rx(uart_rx_gpio),
         .i2c_sda_o(i2c_sda_o),
         .i2c_sda_oe(i2c_sda_oe),

@@ -73,8 +73,9 @@ int main(void)
      *  - Enable PWM global controller (*PWM_CTRL_ADDRESS = 1)
      * ------------------------------------------------------------------------
      */
-    // *PWM_PRESCALER_ADDRESS = 89;
-    // *PWM_PERIOD_ADDRESS    = 100;
+     
+    *PWM_PRESCALER_ADDRESS = 89;
+    *PWM_PERIOD_ADDRESS    = 100;
 
     /* Enable PWM channels 0, 1, and 2 */
     *PWM_ENABLE_ADDRESS    = (1u << 0) | (1u << 1) | (1u << 2);
@@ -91,8 +92,8 @@ int main(void)
     while (1) {
         /* Update duty cycles for PWM Channels 0, 1, and 2 */
         *(PWM_DUTY_BASE_ADDRESS + 0) = duty;
-        *(PWM_DUTY_BASE_ADDRESS + 4) = duty;
-        *(PWM_DUTY_BASE_ADDRESS + 8) = duty;
+        *(PWM_DUTY_BASE_ADDRESS + 1) = duty;
+        *(PWM_DUTY_BASE_ADDRESS + 2) = duty;
 
         /* Toggle GPIOA[7] */
         gpioa_out ^= (1u << 7);

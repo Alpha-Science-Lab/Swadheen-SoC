@@ -37,9 +37,28 @@ static void delay_half_second(void)
         ;
 }
 
+static inline void uart_write_char(char c)
+{
+    while (!(*UART_TX_STATUS_ADDRESS & (1u << UART_TX_STATUS_IDX_EMPTY)));
+    *UART_BUFFER_ADDRESS = (uint8_t)c;
+}
+static inline void uart_write_string(const char *s)
+{
+    while (*s) uart_write_char(*s++);
+}
+static void uart_write_u32(uint32_t v)
+{
+    char buf[12]; int i = 0;
+    if (v == 0) buf[i++] = '0';
+    else while (v) { buf[i++] = '0' + (v % 10); v /= 10; }
+    while (i--) uart_write_char(buf[i]);
+}
+
 int main(void)
 {
     *LEDS_ADDRESS = 0xFFFF; /* Turn off onboad LEDs */
+    uart_write_string("PWM_GPIO_DEMO RUNNING\r\n");
+    uart_write_string("S0\r\n");
 
     /* ------------------------------------------------------------------------
      * GPIO Configuration
@@ -54,15 +73,13 @@ int main(void)
      *   - Pin 7 mode set to MODE_OUTPUT (0x1) -> bits [15:14] = 2'b01
      * ------------------------------------------------------------------------
      */
-    uint32_t func1_val = *GPIOA_FUNC1_ADDRESS;
-    func1_val &= ~0x0000FFFFu; // Clear pins 4..7 function nibbles
-    func1_val |= (0x0u << 12) | (0x5u << 8) | (0x5u << 4) | (0x5u << 0);
-    *GPIOA_FUNC1_ADDRESS = func1_val;
+    /* GPIOA pins 4,5,6 = PWM (0x5); pin 7 = GPIO (0x0) -- direct write (no RMW read) */
+    *GPIOA_FUNC1_ADDRESS = (0x5u << 0) | (0x5u << 4) | (0x5u << 8) | (0x0u << 12);
+    uart_write_string("S1\r\n");
 
-    uint32_t mode_val = *GPIOA_MODE_ADDRESS;
-    mode_val &= ~(0x3u << 14); // Clear pin 7 mode bits [15:14]
-    mode_val |=  (0x1u << 14); // Set pin 7 mode to MODE_OUTPUT (0x1)
-    *GPIOA_MODE_ADDRESS = mode_val;
+    /* Pin 7 = output (others left as input) */
+    *GPIOA_MODE_ADDRESS = (0x1u << 14);
+    uart_write_string("S2\r\n");
 
     /* ------------------------------------------------------------------------
      * PWM Peripheral Configuration
@@ -73,15 +90,18 @@ int main(void)
      *  - Enable PWM global controller (*PWM_CTRL_ADDRESS = 1)
      * ------------------------------------------------------------------------
      */
-    // *PWM_PRESCALER_ADDRESS = 89;
-    // *PWM_PERIOD_ADDRESS    = 100;
+    *PWM_PRESCALER_ADDRESS = 89;
+    *PWM_PERIOD_ADDRESS    = 100;
+    uart_write_string("S3\r\n");
 
     /* Enable PWM channels 0, 1, and 2 */
     *PWM_ENABLE_ADDRESS    = (1u << 0) | (1u << 1) | (1u << 2);
+    uart_write_string("S4\r\n");
     *PWM_INVERT_ADDRESS    = 0;
 
     /* Start global PWM counter */
     *PWM_CTRL_ADDRESS      = 1;
+    uart_write_string("S5\r\n");
 
     /* Initial variables */
     uint32_t duty = 20;
@@ -91,12 +111,20 @@ int main(void)
     while (1) {
         /* Update duty cycles for PWM Channels 0, 1, and 2 */
         *(PWM_DUTY_BASE_ADDRESS + 0) = duty;
-        *(PWM_DUTY_BASE_ADDRESS + 4) = duty;
-        *(PWM_DUTY_BASE_ADDRESS + 8) = duty;
+        *(PWM_DUTY_BASE_ADDRESS + 1) = duty;
+        *(PWM_DUTY_BASE_ADDRESS + 2) = duty;
+        uart_write_string("D\r\n");
 
         /* Toggle GPIOA[7] */
         gpioa_out ^= (1u << 7);
         *GPIOA_OUTPUT_ADDRESS = gpioa_out;
+        uart_write_string("T\r\n");
+
+        uart_write_string("duty=");
+        uart_write_u32(duty);
+        uart_write_string(" gpio7=");
+        uart_write_u32((gpioa_out >> 7) & 1u);
+        uart_write_string("\r\n");
 
         /* Half-second delay */
         delay_half_second();

@@ -48,7 +48,7 @@ IO_LOC  "uart_tx" 17;
 IO_PORT "uart_tx" IO_TYPE=LVCMOS33;
 
 IO_LOC  "uart_rx_async" 18;
-IO_PORT "uart_rx_async" IO_TYPE=LVCMOS33;
+IO_PORT "uart_rx_async" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
 #---------------------------------------------------------
 # GPIOs (External pins)

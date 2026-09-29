@@ -196,9 +196,6 @@ int __bootloader() {
             __transmit_string("ERROR: Wrong checksum\n");
             return -1;
         }
-
-        // Send confirmation character for flow control / ACK
-        __transmit_char('.');
     }
 
     // Jump to payload entry (assumes no return)

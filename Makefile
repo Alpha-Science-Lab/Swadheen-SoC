@@ -192,12 +192,12 @@ C_LIB_OBJ = $(patsubst $(STD_LIB_DIR)/src/%.c, $(BUILD_DIR)/$(STD_LIB_DIR)/%.o, 
 # Compile std lib c files
 $(BUILD_DIR)/$(STD_LIB_DIR)/%.o: $(STD_LIB_DIR)/src/%.c
 	@ mkdir -p $(BUILD_DIR)/$(STD_LIB_DIR)
-	$(CC) $(RISCV_ARCH) -fdata-sections -ffunction-sections -c -o $@ -I $(STD_LIB_DIR)/include $<
+	$(CC) $(RISCV_ARCH) -fno-jump-tables -fdata-sections -ffunction-sections -c -o $@ -I $(STD_LIB_DIR)/include $<
 
 # Compile test c file
 $(BUILD_DIR)/$(C_DIR)/%/out.o: $(C_DIR)/%.c
 	@ mkdir -p $(BUILD_DIR)/$(C_DIR)/$*
-	$(CC) $(RISCV_ARCH) -fdata-sections -ffunction-sections -c -o $@ -I $(STD_LIB_DIR)/include $<
+	$(CC) $(RISCV_ARCH) -fno-jump-tables -fdata-sections -ffunction-sections -c -o $@ -I $(STD_LIB_DIR)/include $<
 
 # Link binary
 $(BUILD_DIR)/$(C_DIR)/%/out.elf: $(BUILD_DIR)/$(C_DIR)/%/out.o $(C_LIB_OBJ) $(STD_LIB_DIR)/hades-v.ld

@@ -6,13 +6,6 @@
  */
 
 
-
-// ------------------------------------------------------------------------------------------------
-// |                                                                                              |
-// | This file contains memory addresses and bit indices of the peripheral                        |
-// |                                                                                              |
-// ------------------------------------------------------------------------------------------------
-
 #ifndef _PERIPHERALS_H
 #define _PERIPHERALS_H
 
@@ -77,7 +70,7 @@
 #define SPI_CS_ADDRESS                (((volatile uint32_t *) ((0x00085400 + 4) << 2)))
 
 // GPIO ADDRESSES
-#define GPIO_ADDRESS                  (((volatile uint32_t *) ((0x00085600      ) << 2)))
+#define GPIO_ADDRESS                  (((volatile uint32_t *) ((0x00085600    ) << 2)))
 
 // GPIO PORT A
 #define GPIOA_DATA_ADDRESS            (((volatile uint32_t *) ((0x00085600 + 0x00) << 2)))

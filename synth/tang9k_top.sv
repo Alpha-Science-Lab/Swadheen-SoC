@@ -24,7 +24,13 @@ module tang9k_top(
     // GPIOs                  /* GPIO alternate functions mapping */   
     inout  logic [7:0] gpioa, /* TX | RX | SDA | SCL | PWM | PWM | PWM | PWM */
     inout  logic [7:0] gpiob, /* MOSI | SCK | CS | MISO | PWM | PWM | PWM | PWM */
-    inout  logic [7:0] gpioc  /* NONE | NONE | NONE | NONE | PWM | PWM | PWM | PWM */
+    inout  logic [7:0] gpioc, /* NONE | NONE | NONE | NONE | PWM | PWM | PWM | PWM */
+
+    // Ext. SPI Flash
+    output logic extsf_clk,
+    output logic extsf_mosi,
+    input  logic extsf_miso,
+    output logic extsf_cs_n
 );
 
     logic pll_clk_o, pll_locked;
@@ -57,7 +63,11 @@ module tang9k_top(
         .uart_tx(uart_tx),
         .gpioa(gpioa),
         .gpiob(gpiob),
-        .gpioc(gpioc)
+        .gpioc(gpioc),
+        .extsf_clk(extsf_clk),
+        .extsf_mosi(extsf_mosi),
+        .extsf_miso(extsf_miso),
+        .extsf_cs_n(extsf_cs_n)
     );
 
 

@@ -9,19 +9,25 @@
  */
 
 
-
 module top;
     import clk_params::*;
 
     integer error_count = 0;
 
-    /* verilator lint_off unusedsignal */
-    logic        clk;
+    logic clk;
     logic [15:0] leds;
-    logic  [4:0] buttons_async = 0;
-    logic        uart_rx_async = 1;
-    logic        uart_tx;
-    /* verilator lint_on unusedsignal */
+    logic [4:0] buttons_async = 0;
+    logic uart_rx_async = 1;
+    logic uart_tx;
+
+    logic [15:0] gpioa;
+    logic [15:0] gpiob;
+    logic [15:0] gpioc;
+
+    logic extsf_clk;
+    logic extsf_mosi;
+    logic extsf_miso;
+    logic extsf_cs_n;
 
     Swadheen_SoC #(
         .CLK_FREQUENCY_MHZ(SYS_CLK_FREQUENCY_MHZ),
@@ -32,7 +38,14 @@ module top;
         .leds(leds),
         .buttons_async(buttons_async),
         .uart_rx_async(uart_rx_async),
-        .uart_tx(uart_tx)
+        .uart_tx(uart_tx),
+        .gpioa(gpioa),
+        .gpiob(gpiob),
+        .gpioc(gpioc),
+        .extsf_clk(extsf_clk),
+        .extsf_mosi(extsf_mosi),
+        .extsf_miso(extsf_miso),
+        .extsf_cs_n(extsf_cs_n)
     );
 
     // System clock

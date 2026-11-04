@@ -30,17 +30,18 @@ module tang9k_SoC #(
     // GPIOs
     inout  logic [15:0] gpioa,
     inout  logic [15:0] gpiob,
-    inout  logic [15:0] gpioc
+    inout  logic [15:0] gpioc,
 
+    // Ext. SPI Flash
+    output logic extsf_clk,
+    output logic extsf_mosi,
+    input  logic extsf_miso,
+    output logic extsf_cs_n
 );
     import constants::*;
 
-    // --------------------------------------------------------------------------------------------
-    // |                                     Synchronization                                      |
-    // --------------------------------------------------------------------------------------------
-
     logic [4:0] buttons;
-    
+
     for (genvar i = 0; i < 5; i++) begin : sync_buttons
         synchronizer button_sync(
             .clk(clk),
@@ -50,28 +51,25 @@ module tang9k_SoC #(
     end
 
     logic uart_rx;
+
     synchronizer uart_rx_sync(
         .clk(clk),
         .async_in(uart_rx_async),
         .sync_out(uart_rx)
     );
-
-    // --------------------------------------------------------------------------------------------
-    // |                                           rst                                            |
-    // --------------------------------------------------------------------------------------------
-
-    // Use initial assignment to ensure initial reset after loading the configuration (FPGA only)
+   
     logic rst = 1;
 
     // Use center button as reset
     always_ff @(posedge clk) begin
-        rst <= buttons[1];
+        rst <= buttons[0];
     end
 
-    // --------------------------------------------------------------------------------------------
-    // |                                           CPU                                            |
-    // --------------------------------------------------------------------------------------------
-
+    assign extsf_sclk  = spi_sclk;
+    assign extsf_mosi  = spi_mosi;
+    assign spi_miso[0] = extsf_miso;
+    assign extsf_cs_n  = spi_cs_n[0];
+    
     // Wishbone
     wishbone_interface fetch_bus();
     wishbone_interface mem_bus();
@@ -90,24 +88,23 @@ module tang9k_SoC #(
     logic i2c_scl_oe;
 
     logic spi_intr;
-    logic spi_clk;
+    logic spi_sclk;
     logic spi_mosi;
-    logic [7:0] spi_miso;
+    logic [3:0] spi_miso;
     logic spi_miso_mux_o;
-    logic [7:0] spi_cs;
+    logic [3:0] spi_cs_n;
 
-    assign spi_miso_mux_o = (spi_cs == 8'h7F) ? spi_miso[7] :
-                            (spi_cs == 8'hBF) ? spi_miso[6] :
-                            (spi_cs == 8'hDF) ? spi_miso[5] :
-                            (spi_cs == 8'hEF) ? spi_miso[4] :
-                            (spi_cs == 8'hF7) ? spi_miso[3] :
-                            (spi_cs == 8'hFB) ? spi_miso[2] :
-                            (spi_cs == 8'hFD) ? spi_miso[1] :
-                            (spi_cs == 8'hFE) ? spi_miso[0] :
-                            1'b0;
+    /* spi_miso is driven by multiple
+        sources from GPIO  */
+    assign spi_miso_mux_o = 
+        (spi_cs_n == 4'h7) ? spi_miso[3] :
+        (spi_cs_n == 4'hB) ? 1'b0        :
+        (spi_cs_n == 4'hD) ? spi_miso[1] :
+        (spi_cs_n == 4'hE) ? spi_miso[0] :
+        1'b0;
 
     // Interrupts    
-    logic uart0_interrupt,uart1_interrupt;
+    logic uart0_interrupt, uart1_interrupt;
     logic timer_interrupt;
 
     logic external_interrupt;
@@ -128,53 +125,25 @@ module tang9k_SoC #(
         .timer_interrupt_in(timer_interrupt)
     );
 
-    // --------------------------------------------------------------------------------------------
-    // |                                       Peripherals                                        |
-    // --------------------------------------------------------------------------------------------
-
     // Memory bus interconnect
-    wishbone_interface mem_bus_slaves[15]();
+    wishbone_interface slaves[12]();
     wishbone_interconnect #(
-        .NUM_SLAVES(15),
+        .NUM_SLAVES(12),
         .SLAVE_ADDRESS({
-            MEMORY_START,
-            LEDS_START,
-            BUTTONS_START,
-            SWITCHES_START,
-            SEGMENTS_START,
-            UART_START,
-            UART1_START,
-            TIMER_START,
-            PWM_START,
-            I2C_START,
-            I2S_START,
-            SPI_START,
-            GPIO_START,
-            VGA_START,
-            TEST_START
+            MEMORY_START, LEDS_START, BUTTONS_START, UART_START, 
+            UART1_START, TIMER_START,PWM_START, I2C_START, 
+            I2S_START, SPI_START, GPIO_START, TEST_START
         }),
         .SLAVE_SIZE({
-            MEMORY_SIZE,
-            LEDS_SIZE,
-            BUTTONS_SIZE,
-            SWITCHES_SIZE,
-            SEGMENTS_SIZE,
-            UART_SIZE,
-            UART_SIZE,
-            TIMER_SIZE,
-            PWM_SIZE,
-            I2C_SIZE,
-            I2S_SIZE,
-            SPI_SIZE,
-            GPIO_SIZE,
-            VGA_SIZE,
-            TEST_SIZE
+            MEMORY_SIZE, LEDS_SIZE, BUTTONS_SIZE, UART_SIZE, 
+            UART_SIZE, TIMER_SIZE, PWM_SIZE, I2C_SIZE, 
+            I2S_SIZE, SPI_SIZE, GPIO_SIZE, TEST_SIZE
         })
     ) peripheral_bus_interconnect (
         .clk(clk),
         .rst(rst),
         .master(mem_bus),
-        .slaves(mem_bus_slaves)
+        .slaves(slaves)
     );
 
     tang9k_ram #(
@@ -184,7 +153,7 @@ module tang9k_SoC #(
         .clk(clk_mem),
         .rst(rst),
         .port_a(fetch_bus.slave),
-        .port_b(mem_bus_slaves[0])
+        .port_b(slaves[0])
     );
 
     wishbone_leds #(
@@ -194,7 +163,7 @@ module tang9k_SoC #(
         .clk(clk),
         .rst(rst),
         .leds(leds),
-        .wishbone(mem_bus_slaves[1])
+        .wishbone(slaves[1])
     );
 
     wishbone_buttons #(
@@ -204,7 +173,7 @@ module tang9k_SoC #(
         .clk(clk),
         .rst(rst),
         .buttons(buttons),
-        .wishbone(mem_bus_slaves[2])
+        .wishbone(slaves[2])
     );
 
     wishbone_uart #(
@@ -218,7 +187,7 @@ module tang9k_SoC #(
         .rx_serial_in(uart_rx),
         .tx_serial_out(uart_tx),
         .interrupt(uart0_interrupt),
-        .wishbone(mem_bus_slaves[5])
+        .wishbone(slaves[3])
     );
 
     wishbone_uart #(
@@ -232,7 +201,7 @@ module tang9k_SoC #(
         .rx_serial_in(uart_rx_gpio),
         .tx_serial_out(uart_tx_gpio),
         .interrupt(uart1_interrupt),
-        .wishbone(mem_bus_slaves[6])
+        .wishbone(slaves[4])
     );
 
     wishbone_timer #(
@@ -243,7 +212,7 @@ module tang9k_SoC #(
         .clk(clk),
         .rst(rst),
         .interrupt(timer_interrupt),
-        .wishbone(mem_bus_slaves[7])
+        .wishbone(slaves[5])
     );
 
     spondon_wb_pwm #(
@@ -254,7 +223,7 @@ module tang9k_SoC #(
     ) wb_pwm (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[8]),
+        .wb(slaves[6]),
         .pwm_out(pwm_out)
     );
     
@@ -266,32 +235,31 @@ module tang9k_SoC #(
     ) wb_i2c (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[9]),
+        .wb(slaves[7]),
         .intr(i2c_intr),
         .scl_pad_i(i2c_scl_i),
         .scl_pad_o(i2c_scl_o),
-        .scl_padoen_o(i2c_scl_oe),
+        .scl_pad_oe(i2c_scl_oe),
         .sda_pad_i(i2c_sda_i),
         .sda_pad_o(i2c_sda_o),
-        .sda_padoen_o(i2c_sda_oe)
+        .sda_pad_oe(i2c_sda_oe)
     );
     
     karnaphuli_wb_spi #(
         .START_ADDRESS(SPI_START),
         .SIZE(SPI_SIZE),
-        .NUM_SLAVES(8),
-        .FIFO_DEPTH(16),
+        .NUM_SLAVES(4),
+        .FIFO_DEPTH(256),
         .DEFAULT_PRESCALER(16'd1)
-
     ) wb_spi (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[11]),
+        .wb(slaves[9]),
         .intr(spi_intr),
-        .spi_sclk(spi_clk),
+        .spi_sclk(spi_sclk),
         .spi_mosi(spi_mosi),
         .spi_miso(spi_miso_mux_o),
-        .spi_cs_n(spi_cs)
+        .spi_cs_n(spi_cs_n)
     );
 
     brahmaputra_wb_gpio #(
@@ -300,7 +268,7 @@ module tang9k_SoC #(
     ) wb_gpio (
         .clk(clk),
         .rst(rst),
-        .wb(mem_bus_slaves[12]),
+        .wb(slaves[10]),
         .gpioa(gpioa),
         .gpiob(gpiob),
         .gpioc(gpioc),
@@ -312,14 +280,14 @@ module tang9k_SoC #(
         .i2c_scl_o(i2c_scl_o),
         .i2c_scl_oe(i2c_scl_oe),
         .i2c_scl_i(i2c_scl_i),
-        .spi0_mosi_o(spi_mosi),
-        .spi0_sck_o(spi_clk),
-        .spi0_cs_o(spi_cs[7]),
-        .spi0_miso_i(spi_miso[7]),
-        .spi1_mosi_o(spi_mosi),
-        .spi1_sck_o(spi_clk),
-        .spi1_cs_o(spi_cs[6]),
-        .spi1_miso_i(spi_miso[6]),
+        .spi0_mosi(spi_mosi),
+        .spi0_sck(spi_sclk),
+        .spi0_cs_n(spi_cs_n[3]),
+        .spi0_miso(spi_miso[3]),
+        .spi1_mosi(spi_mosi),
+        .spi1_sck(spi_sclk),
+        .spi1_cs_n(spi_cs_n[2]),
+        .spi1_miso(spi_miso[2]),
         .pwm_out(pwm_out)
     );
 

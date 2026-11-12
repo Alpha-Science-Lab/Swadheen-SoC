@@ -37,10 +37,7 @@ set SOURCES {
 
     external/periph-wb/spondon/design/*.sv
     external/periph-wb/dotara/design/*.sv
-    external/periph-wb/bashi/design/bashi_pkg.sv
-    external/periph-wb/bashi/design/bashi_regs.sv
-    external/periph-wb/bashi/design/bashi_i2s_tx.sv
-    external/periph-wb/bashi/design/bashi_wb_i2s.sv
+    external/periph-wb/bashi/design/*.sv
     external/periph-wb/karnaphuli/design/*.sv
     external/periph-wb/brahmaputra/design/*.sv
     

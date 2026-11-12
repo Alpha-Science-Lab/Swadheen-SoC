@@ -53,7 +53,8 @@ module tang9k_top(
 
     tang9k_SoC #(
         .CLK_FREQUENCY_MHZ(9.0), /* Conform to /synth/gowin_rpll.v*/
-        .UART_BAUD_RATE(115200)
+        .UART_BAUD_RATE(115200),
+        .UART1_BAUD_RATE(9600) /* HC-05 default */
     ) SoC (
         .clk(pll_clk_o),
         .clk_mem(~pll_clk_o),

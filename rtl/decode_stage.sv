@@ -301,7 +301,6 @@
                     + decoded_instruction.immediate) & ~32'b1;
             end
         end
-        
     end
 
 

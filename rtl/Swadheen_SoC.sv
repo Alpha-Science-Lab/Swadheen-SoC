@@ -96,11 +96,16 @@ module Swadheen_SoC #(
     logic spi_miso_mux_o;
     logic [3:0] spi_cs_n;
 
+    logic i2s_intr;
+    logic i2s_bclk;
+    logic i2s_lrclk;
+    logic i2s_sdout;
+
     /* spi_miso is driven by multiple
         sources from GPIO  */
     assign spi_miso_mux_o = 
         (spi_cs_n == 4'h7) ? spi_miso[3] :
-        (spi_cs_n == 4'hB) ? 1'b0        :
+        (spi_cs_n == 4'hB) ? spi_miso[2] :
         (spi_cs_n == 4'hD) ? spi_miso[1] :
         (spi_cs_n == 4'hE) ? spi_miso[0] :
         1'b0;
@@ -116,11 +121,15 @@ module Swadheen_SoC #(
         uart0_interrupt,
         uart1_interrupt,
         i2c_intr,
+        i2s_intr,
         spi_intr
     };
 
     // Instantiate CPU
-    Hadi_V cpu(
+    Hadi_V #(
+        .RESET_VECTOR(constants::RESET_ADDRESS),
+        .HART_ID(32'h0)
+    ) cpu (
         .clk(clk),
         .rst(rst),
         .memory_fetch_port(fetch_bus.master),
@@ -249,6 +258,19 @@ module Swadheen_SoC #(
         .sda_pad_o(i2c_sda_o),
         .sda_pad_oe(i2c_sda_oe)
     );
+
+    bashi_wb_i2s #(
+        .START_ADDRESS(I2S_START),
+        .SIZE(I2S_SIZE)
+    ) wb_i2s (
+        .clk(clk),
+        .rst(rst),
+        .wb(slaves[8]),
+        .intr(i2s_intr),
+        .i2s_bclk(i2s_bclk),
+        .i2s_lrclk(i2s_lrclk),
+        .i2s_sdout(i2s_sdout)
+    );
     
     karnaphuli_wb_spi #(
         .START_ADDRESS(SPI_START),
@@ -279,11 +301,12 @@ module Swadheen_SoC #(
         .gpioc(gpioc),
         .uart_tx(uart_tx_gpio),
         .uart_rx(uart_rx_gpio),
+        // dotara's pad_oe is active-low (1 = release the line), the GPIO mux wants an active-high enable
         .i2c_sda_o(i2c_sda_o),
-        .i2c_sda_oe(i2c_sda_oe),
+        .i2c_sda_oe(~i2c_sda_oe),
         .i2c_sda_i(i2c_sda_i),
         .i2c_scl_o(i2c_scl_o),
-        .i2c_scl_oe(i2c_scl_oe),
+        .i2c_scl_oe(~i2c_scl_oe),
         .i2c_scl_i(i2c_scl_i),
         .spi0_mosi(spi_mosi),
         .spi0_sck(spi_sclk),
@@ -293,6 +316,9 @@ module Swadheen_SoC #(
         .spi1_sck(spi_sclk),
         .spi1_cs_n(spi_cs_n[2]),
         .spi1_miso(spi_miso[2]),
+        .i2s_sck(i2s_bclk),
+        .i2s_ws(i2s_lrclk),
+        .i2s_sd_o(i2s_sdout),
         .pwm_out(pwm_out)
     );
 

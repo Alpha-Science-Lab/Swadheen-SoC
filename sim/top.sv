@@ -14,15 +14,18 @@ module top;
 
     integer error_count = 0;
 
+    // UART divider, the transmitter needs one more clock than this per bit
+    localparam int UART_CLKS_PER_BIT = 15;
+
     logic clk;
     logic [15:0] leds;
     logic [4:0] buttons_async = 0;
     logic uart_rx_async = 1;
     logic uart_tx;
 
-    logic [15:0] gpioa;
-    logic [15:0] gpiob;
-    logic [15:0] gpioc;
+    tri [15:0] gpioa;
+    tri [15:0] gpiob;
+    tri [15:0] gpioc;
 
     logic extsf_clk;
     logic extsf_mosi;
@@ -31,7 +34,7 @@ module top;
 
     Swadheen_SoC #(
         .CLK_FREQUENCY_MHZ(SYS_CLK_FREQUENCY_MHZ),
-        .UART_BAUD_RATE( int'((SYS_CLK_FREQUENCY_MHZ*1_000_000) / 15) )
+        .UART_BAUD_RATE( int'((SYS_CLK_FREQUENCY_MHZ*1_000_000) / UART_CLKS_PER_BIT) )
     ) SoC (
         .clk(clk),
         .clk_mem(~clk),
@@ -46,6 +49,20 @@ module top;
         .extsf_mosi(extsf_mosi),
         .extsf_miso(extsf_miso),
         .extsf_cs_n(extsf_cs_n)
+    );
+
+    // Things wired to the SoC pins by the peripheral demos (see periph_models.sv)
+    periph_models #(
+        .UART_BIT_CYCLES(UART_CLKS_PER_BIT + 1)
+    ) models (
+        .clk(clk),
+        .uart_tx(uart_tx),
+        .gpioa(gpioa),
+        .gpiob(gpiob),
+        .gpioc(gpioc),
+        .gpioa_oe(SoC.wb_gpio.gpioa_oe),
+        .gpiob_oe(SoC.wb_gpio.gpiob_oe),
+        .gpioc_oe(SoC.wb_gpio.gpioc_oe)
     );
 
     // System clock

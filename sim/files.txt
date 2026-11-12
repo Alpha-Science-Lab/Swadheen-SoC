@@ -17,5 +17,8 @@ defines/clk_params.sv
 -y external/periph-wb/dotara/design
 -y external/periph-wb/karnaphuli/design
 -y external/periph-wb/brahmaputra/design
+-y external/periph-wb/bashi/design
 
 -y rtl
+
+sim/periph_models.sv

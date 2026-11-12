@@ -43,14 +43,14 @@ The SoC currently includes the following Wishbone-connected peripherals:
 * Wishbone RAM
 * Wishbone LEDs
 * Wishbone Buttons
-* Wishbone UART
+* Wishbone UART (two instances: UART0 on the USB-serial bridge, UART1 on GPIOA)
 * Wishbone Timer
+* Wishbone PWM (Spondon)
+* Wishbone I2C (Dotara)
+* Wishbone I2S (Bashi)
+* Wishbone SPI (Karnaphuli)
+* Wishbone GPIO with pin function mux (Brahmaputra)
 * Wishbone Test Peripheral
-
-The following peripherals are planned or under development:
-
-* Wishbone I2C
-* Wishbone PWM
 
 The following peripherals from the original framework are being dropped from this SoC configuration:
 
@@ -62,10 +62,10 @@ The following peripherals from the original framework are being dropped from thi
 
 ## • Development Status
 
-* **Design**: Initial SoC integration phase ongoing
-* **Verification**: System level vefication is ongoing
-* **Synthesis**: Target device **Digilent Basys3 FPGA Board**
-* **Peripheral Development**: I2C and PWM peripherals are under development
+* **Design**: SoC integration complete; peripherals are developed in the `periph-wb` repository
+* **Verification**: Self-checking assembly tests for the core, run with `make test-all`
+* **Synthesis**: Targets **Sipeed Tang Nano 9K** (`make synthesis_gw`, `make flash_tang9k`) and **Digilent Basys3** (`make synthesis`)
+* **CPU core**: shared with the `Hadi-V` repository; `make check-cpu-sync` fails if the two copies differ
 
 ---
 
@@ -123,6 +123,14 @@ This will:
 * Generate memory initialization files
 * Run the simulation using Verilator
 
+#### ▶️ Whole Regression
+
+```bash
+make test-all
+```
+
+Runs every assembly test (the multiply/divide tests with `M_EXT=1`) and every SystemVerilog testbench in private build directories. It exits non-zero if any test does not report "All tests passed". The C programs under `test/c` are demos and benchmarks, not self-checking tests.
+
 ---
 
 ### 4. View Waveforms
@@ -162,6 +170,15 @@ make synthesis
 ```
 
 This uses **Xilinx Vivado** in batch mode to generate the bitstream.
+
+For the **Tang Nano 9K** (needs the Gowin EDA tools and `openFPGALoader`):
+
+```bash
+make synthesis_gw      # build the bitstream
+make flash_tang9k      # write it to the board's flash
+```
+
+The Tang Nano 9K top sets UART0 to 115200 baud and UART1 to 9600 baud (the HC-05 default); change them in `synth/tang9k_top.sv`. The Makefile does not track the `.sv` files, so `touch synth/tang9k_synth.tcl` before `make synthesis_gw` after editing RTL.
 
 ---
 

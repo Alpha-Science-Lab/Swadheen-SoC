@@ -86,6 +86,8 @@ help:
 	@echo "  help        Prints this help message"
 	@echo "  clean       Deletes build artifacts"
 	@echo "  test/...    Builds and runs the specified test"
+	@echo "  test-all    Runs every self-checking test and fails if any does not pass"
+	@echo "  check-cpu-sync  Fails if the CPU core differs from ../Hadi-V"
 	@echo "  show        Show the waveform of the most recently run test (if available)"
 # 	@echo "  bootloader  Build the bootloader"
 	@echo "  synthesis   Synthesize the MCU using Vivado"
@@ -98,6 +100,29 @@ help:
 .PHONY: clean
 clean::
 	rm -rf $(BUILD_DIR)
+
+################################################################################
+#                             Regression and Checks                            #
+################################################################################
+
+.PHONY: test-all
+test-all:
+	@ ./run_tests.sh
+
+# The CPU core is shared with ../Hadi-V; the two copies must stay identical
+CPU_FILES = csr_file decode_stage dyn_branch_pred execute_stage fetch_stage \
+            instruction_decoder memory_stage register_file writeback_stage Hadi_V
+
+.PHONY: check-cpu-sync
+check-cpu-sync:
+	@ status=0; \
+	for f in $(CPU_FILES); do \
+		if ! cmp -s rtl/$$f.sv ../Hadi-V/rtl/$$f.sv; then echo "differs from ../Hadi-V: rtl/$$f.sv"; status=1; fi; \
+	done; \
+	for f in csr instruction op forwarding branch_pred_pkg pipeline_status; do \
+		if ! cmp -s defines/$$f.sv ../Hadi-V/defines/$$f.sv; then echo "differs from ../Hadi-V: defines/$$f.sv"; status=1; fi; \
+	done; \
+	[ $$status -eq 0 ] && echo "CPU core matches ../Hadi-V"; exit $$status
 
 ################################################################################
 #                                   Synthesis                                  #

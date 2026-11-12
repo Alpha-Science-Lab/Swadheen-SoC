@@ -68,14 +68,14 @@ int main(void)
      * PWM Peripheral Configuration
      * ------------------------------------------------------------------------
      *  - Prescaler: 89 (for 9MHz clock, tick frequency = 100 kHz)
-     *  - Period: 100 (100 ticks per PWM cycle = 1 kHz PWM frequency)
+     *  - Period: 99 (99 + 1 = 100 ticks per PWM cycle = 1 kHz PWM frequency)
      *  - Enable channels 0, 1, 2 (bits [2:0] = 0x7)
      *  - Enable PWM global controller (*PWM_CTRL_ADDRESS = 1)
      * ------------------------------------------------------------------------
      */
      
     *PWM_PRESCALER_ADDRESS = 89;
-    *PWM_PERIOD_ADDRESS    = 100;
+    *PWM_PERIOD_ADDRESS    = 99;
 
     /* Enable PWM channels 0, 1, and 2 */
     *PWM_ENABLE_ADDRESS    = (1u << 0) | (1u << 1) | (1u << 2);

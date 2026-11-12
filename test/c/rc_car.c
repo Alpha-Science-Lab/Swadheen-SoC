@@ -26,7 +26,7 @@
  *   System clock = 9 MHz
  *   Prescaler    = 89
  *   PWM tick     = 100 kHz
- *   Period       = 100
+ *   Period       = 99 (100 ticks)
  *   PWM frequency = 1 kHz
  *
  * Speed:
@@ -47,7 +47,7 @@
 #define SYS_CLK_HZ          9000000UL
 
 #define PWM_PRESCALER       89
-#define PWM_PERIOD          100
+#define PWM_PERIOD          99
 
 #define SPEED_INITIAL       50
 #define SPEED_MIN           20
@@ -305,7 +305,7 @@ static void pwm_init(void)
     *PWM_PRESCALER_ADDRESS = PWM_PRESCALER;
 
     /*
-     * 100 counter ticks per PWM period.
+     * 99 + 1 = 100 counter ticks per PWM period.
      *
      * 100 kHz / 100 = 1 kHz PWM frequency.
      */

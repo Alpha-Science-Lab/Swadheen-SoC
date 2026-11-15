@@ -78,6 +78,14 @@ module Swadheen_SoC #(
     
     // peipheral wires
     logic uart_rx_gpio, uart_tx_gpio;
+    logic uart_rx_gpio_raw;
+
+    // The pin is asynchronous to clk
+    synchronizer uart1_rx_sync(
+        .clk(clk),
+        .async_in(uart_rx_gpio_raw),
+        .sync_out(uart_rx_gpio)
+    );
 
     logic [15:0] pwm_out;
 
@@ -300,7 +308,7 @@ module Swadheen_SoC #(
         .gpiob(gpiob),
         .gpioc(gpioc),
         .uart_tx(uart_tx_gpio),
-        .uart_rx(uart_rx_gpio),
+        .uart_rx(uart_rx_gpio_raw),
         // dotara's pad_oe is active-low (1 = release the line), the GPIO mux wants an active-high enable
         .i2c_sda_o(i2c_sda_o),
         .i2c_sda_oe(~i2c_sda_oe),

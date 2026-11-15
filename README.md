@@ -178,7 +178,7 @@ make synthesis_gw      # build the bitstream
 make flash_tang9k      # write it to the board's flash
 ```
 
-The Tang Nano 9K top sets UART0 to 115200 baud and UART1 to 9600 baud (the HC-05 default); change them in `synth/tang9k_top.sv`. The Makefile does not track the `.sv` files, so `touch synth/tang9k_synth.tcl` before `make synthesis_gw` after editing RTL.
+The Tang Nano 9K top sets UART0 and UART1 to 115200 baud; change them in `synth/tang9k_top.sv` (UART1 must match the Bluetooth module's configured baud). The Makefile does not track the `.sv` files, so `touch synth/tang9k_synth.tcl` before `make synthesis_gw` after editing RTL.
 
 ---
 

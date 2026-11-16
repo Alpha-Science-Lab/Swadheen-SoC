@@ -62,7 +62,7 @@ module tang9k_SoC #(
 
     // Use center button as reset
     always_ff @(posedge clk) begin
-        rst <= buttons[0];
+        rst <= buttons[1];
     end
 
     assign extsf_sclk  = spi_sclk;
